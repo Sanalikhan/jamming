@@ -29,9 +29,6 @@ function App() {
     setMyPlayList((prev)=>[...prev,plist]);
   }
 
-  
-
-
 
   return (
     <div className="bg-[url('./images/neonbackgroundformusicparty.jpg')] bg-cover bg-center h-screen w-full">
