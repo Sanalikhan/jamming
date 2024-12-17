@@ -55,7 +55,7 @@ export async function exchangeCodeForToken(authorizationCode){
    const redirectUri='http://localhost:3000/callback';
    const codeVerifier=localStorage.getItem('code_verifier');
    
-   const url='https://acounts.spotify.com/api/token';
+   const url='https://accounts.spotify.com/api/token';
 
    const body= new URLSearchParams();
    body.append('client_id',clientId);
@@ -65,6 +65,7 @@ export async function exchangeCodeForToken(authorizationCode){
    body.append('code_verifier',codeVerifier);
 
    try{
+      console.log('Sending Token Request to Spotify...');
       const response= await fetch(url,{
          method: 'POST',
          headers:{
@@ -73,16 +74,19 @@ export async function exchangeCodeForToken(authorizationCode){
          body: body.toString(),
       });
 
+      console.log('Token Response Status:', response.status);
+
       if (!response.ok){
          throw new Error(`Token exchange failed: ${response.statusText}`);
       }
 
       const data= await response.json();
+      console.log('Token Response Data:', data);
       return data;
    }
 
    catch(error){
-      console.log('Error exchanging code for tokens',error);
+      console.error('Error exchanging code for tokens',error);
       throw error;
    }
 }
@@ -92,7 +96,6 @@ export function storeTokens(tokens){
    window.localStorage.setItem('access_token', tokens.access_token);
    window.localStorage.setItem('refresh_token', tokens.refresh_token);
    window.localStorage.setItem('expires_in', tokens.expires_in);
-
    console.log('Token stored successfully!');
 }
 
