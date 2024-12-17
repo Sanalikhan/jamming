@@ -1,4 +1,9 @@
 import React, { useState } from 'react';
+import { redirectToSpotifyAuth } from './pkceutilities';
+
+
+
+
 function MyList({mylist,deleteHandling,setPlayList}){
     const [playlistName,setPlaylistName]=useState("");
     const removeSong=(song)=>{
@@ -6,30 +11,22 @@ function MyList({mylist,deleteHandling,setPlayList}){
         const newList=mylist.filter((item)=>item.title!==targetTitle);
         deleteHandling(newList);
     }
-    const trackUris=()=>mylist.map((item)=>item.uri);
 
-    const handleSavePlayList=(playlistName,trackUris)=>{
+    const handleSaveToSpotify= async () => {
+        const accessToken= window.localStorage.getItem('access_token');
 
-        if (!playlistName.trim()){
-            alert('please provide a playlist name');
+        if(!accessToken){
+            redirectToSpotifyAuth();
             return;
         }
-        if (trackUris.length === 0){
-            alert('No tracks in the playlist to save.Please first add the tracks!');
+        if (mylist.length===0){
+            alert('No tracks in the playlist to save.Please add tracks first!');
             return;
         }
-        console.log(`Saving Playlist: ${playlistName}`);
-        console.log(`Track URIs: ${trackUris}`);
-        alert (`Playlist : ${playlistName} saved successfully!`);
-        const playlist={
-            name:playlistName,
-            songs:mylist
-        };
-
-        //clear the list and reset playlist name
-        setPlayList(playlist);
-        deleteHandling([]);
-        setPlaylistName("");
+        if (!playlistName || !playlistName.trim()){
+            alert('Playlist name cannot be empty!');
+            return;
+        }
     }
 
     return (
@@ -53,9 +50,8 @@ function MyList({mylist,deleteHandling,setPlayList}){
                 </li>
             ))}
             </ul>
-            <button className='bg-blue-500 rounded-full py-2 mt-6 w-[50%] hover:bg-blue-600' 
-            onClick={()=>{handleSavePlayList(playlistName,trackUris())}}
-            disabled={!playlistName.trim() || mylist.length===0}
+            <button className='bg-blue-500 rounded-full py-2 mt-6 w-[50%] hover:bg-blue-600' id='save-to-spotify'
+            onClick={handleSaveToSpotify}
             >Save to Spotify</button>
         </div>
     );
