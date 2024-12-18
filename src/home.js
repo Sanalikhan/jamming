@@ -2,7 +2,7 @@ import React from 'react';
 import { useState } from 'react';
 import './App.css';
 import Search from './search';
-import songsDataBase from './mockdata';
+//import songsDataBase from './mockdata';
 import Results from './results';
 import MyList from './mylist';
 
@@ -14,6 +14,8 @@ function Home() {
   const [list,setList]=useState([]);
   const [myPlayList,setMyPlayList]=useState([]);
 
+  /*
+ //this function was previously used when i was using mocked data 
   const handleSearch=(searchQuery)=>{
     setSearchQuery(searchQuery);
     const filteredResults=songsDataBase.filter((song,index)=>{
@@ -21,6 +23,44 @@ function Home() {
     });
     setResult(filteredResults);
   }
+    */
+ const handleSearch = async (searchQuery) =>{
+    setSearchQuery(searchQuery);
+     if (!searchQuery) return; //stop if the query is empty
+     const accessToken= localStorage.getItem('access_token');
+
+     try{
+        const response=await fetch (
+            `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=track&limit=10`,
+            {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            });
+            if (!response.ok){
+                throw new Error('Spotify API request failed');
+            }
+            const data= await response.json();
+            console.log('Spotify API Data:', data);
+
+            //Transform the data for Results component
+            const transformedResults=data.tracks.items.map((track)=>({
+                id: track.id,
+                title: track.name,
+                artist: track.artists.map((artist)=> artist.name).join(", "),
+            }));
+
+            //set raw api result
+            setResult(transformedResults);
+        }
+     catch(error){
+        console.error('Error fetching from Spotify API:', error);
+     };
+ }
+
+
+
   const listHandler=(song)=>{
     setList((prev) => [...prev,song]);
   }

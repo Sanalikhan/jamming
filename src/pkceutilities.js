@@ -93,12 +93,73 @@ export async function exchangeCodeForToken(authorizationCode){
 
 //save tokens
 export function storeTokens(tokens){
+   const expirationTime = Date.now() + tokens.expire_in * 1000;//calculate expiration time
    window.localStorage.setItem('access_token', tokens.access_token);
    window.localStorage.setItem('refresh_token', tokens.refresh_token);
    window.localStorage.setItem('expires_in', tokens.expires_in);
    console.log('Token stored successfully!');
 }
 
+//code to refresh the tokens
+export async function refreshToken(){
+   const refreshToken=localStorage.getItem('refresh_token');
+   if (!refreshToken){
+      console.error(`No refresh token found!`);
+      return null;
+   }
+   const clientId= 'b09cf7cd755743e68f961a9124779aa1';
+   const url='https://accounts.spotify.com/api/token';
+   const body=new URLSearchParams();
+   body.append('client_id',clientId);
+   body.append('refresh_token', refreshToken);
+   body.append('grant_type','refresh_token');
+
+   try{
+      console.log('Requesting new acccess token using refresh token...');
+      const response= await fetch(url,
+         {
+            method:'POST',
+            headers:{
+               'Content-type': 'application/x-www-form-urlencoded'
+            },
+            body: body.toString(),
+         }
+      );
+       if (!response.ok){
+         const errorBody= await response.text();
+         throw new Error(`Token refresh failed: ${response.statusText} (${response.status}) - ${errorBody})`);
+       }
+       const data= await response.json();
+       console.log('Token refresh response data', data);
+
+       //update localStorage with new access token and expiry time
+       if (data.access_token){
+         localStorage.setItem('access_token', data.access_token);
+         if (data.expires_in){
+            localStorage.setItem('expires_in',data.expires_in);
+         }
+       }
+       return data.access_token;
+   }
+   catch(error){
+      console.log('Error refreshing access token',error);
+      throw error;
+   }
+} 
+export async function getValidAccessToken(){
+   const accessToken= localStorage.getItem('access_token');
+   const expiresAt= parseInt(localStorage.getItem("expires_at"),10); //retreives the stored expiration time
+    if(Date.now() < expiresAt){
+      console.log('Access token is still valid');
+      return accessToken;
+    }
+    //refreshing the token
+    else{
+      console.log('Access token has expired. Refreshing...');
+      return await refreshToken();
+    }
+
+}
 
 
 

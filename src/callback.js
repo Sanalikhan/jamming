@@ -1,27 +1,33 @@
-import React from 'react';
-import { useEffect } from 'react';
+import React,{useEffect} from 'react';
 import { getAuthorizationCode,exchangeCodeForToken, storeTokens } from './pkceutilities';
 
 
 const Callback= ()=>{
     useEffect(()=>{
+      console.log("Starting Token Exchange");
         const authCode= getAuthorizationCode();
         console.log('AuthorizationCode:', authCode);
 
         //Exchange the authorization code for tokens
         if(authCode){
+          console.log("Starting token exchange...");
             exchangeCodeForToken(authCode)
               .then((tokens)=>{
+                console.log("Received Tokens:", tokens);
                 storeTokens(tokens);
                 console.log('Token exchanged and stored successfully!');
               })
               .catch((err)=>{
                 console.error('Error during token exchange:', err);
               });
-        }
-    },[]);
+            }
+            else{
+              console.warn('No Authorization Code found in URL!');
+            }
+        },[]);
+
     return <div>Processing Spotify Authentication...</div>
-}
+};
 
 export default Callback;
 /*
