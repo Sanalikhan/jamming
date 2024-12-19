@@ -21,12 +21,13 @@ return values.reduce((acc,value)=>acc+possible[value%possible.length], "");
 export async function redirectToSpotifyAuth(){
    const clientId='b09cf7cd755743e68f961a9124779aa1';
    const redirectUri='http://localhost:3000/callback';
-   const scope='user-read-private user-read-email';
+   const scope='user-read-private user-read-email playlist-modify-private playlist-modify-public';
    const codeVerifier=generateCodeVerifier(64);
    const codeChallenge=await generateCodeChallenge(codeVerifier);
 
    //store code verifier in local storage for later use
    window.localStorage.setItem('code_verifier', codeVerifier);
+   window.localStorage.setItem('code_challenge',codeChallenge);
 
    //making uth. Url
    const authUrl= new URL('https://accounts.spotify.com/authorize');
@@ -93,10 +94,11 @@ export async function exchangeCodeForToken(authorizationCode){
 
 //save tokens
 export function storeTokens(tokens){
-   const expirationTime = Date.now() + tokens.expire_in * 1000;//calculate expiration time
+   const expirationTime = Date.now() + tokens.expires_in * 1000;//calculate expiration time
    window.localStorage.setItem('access_token', tokens.access_token);
    window.localStorage.setItem('refresh_token', tokens.refresh_token);
    window.localStorage.setItem('expires_in', tokens.expires_in);
+   window.localStorage.setItem('expires_at', expirationTime);
    console.log('Token stored successfully!');
 }
 
@@ -148,17 +150,23 @@ export async function refreshToken(){
 } 
 export async function getValidAccessToken(){
    const accessToken= localStorage.getItem('access_token');
-   const expiresAt= parseInt(localStorage.getItem("expires_at"),10); //retreives the stored expiration time
-    if(Date.now() < expiresAt){
+   const expiresAt= parseInt(localStorage.getItem("expires_at"),10); //retrieves the stored expiration time
+
+    if(accessToken && Date.now() < expiresAt){
       console.log('Access token is still valid');
       return accessToken;
     }
     //refreshing the token
-    else{
+    try{
       console.log('Access token has expired. Refreshing...');
       return await refreshToken();
+    }catch(error){
+      console.error('Error refreshing the token:', error );
+      //Handle token refresh failure
+      alert ('Session expired. Please login again.');
+      localStorage.clear();//clear the stored tokens 
+      redirectToSpotifyAuth(); //Re-initiate authentication flow
     }
-
 }
 
 

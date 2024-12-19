@@ -5,14 +5,14 @@ import Search from './search';
 //import songsDataBase from './mockdata';
 import Results from './results';
 import MyList from './mylist';
-
-
+import { getValidAccessToken } from './pkceutilities';
 
 function Home() {
   const[searchQuery,setSearchQuery]=useState("");
   const[result,setResult]=useState([]);
   const [list,setList]=useState([]);
   const [myPlayList,setMyPlayList]=useState([]);
+
 
   /*
  //this function was previously used when i was using mocked data 
@@ -26,8 +26,13 @@ function Home() {
     */
  const handleSearch = async (searchQuery) =>{
     setSearchQuery(searchQuery);
-     if (!searchQuery) return; //stop if the query is empty
-     const accessToken= localStorage.getItem('access_token');
+     if (!searchQuery){
+      setResult([]);
+     return;
+     } //stop if the query is empty
+
+     const accessToken= await getValidAccessToken(); 
+     //(replacing this with the refresh toke to ensure a valid token every time)localStorage.getItem('access_token');
 
      try{
         const response=await fetch (
@@ -49,6 +54,7 @@ function Home() {
                 id: track.id,
                 title: track.name,
                 artist: track.artists.map((artist)=> artist.name).join(", "),
+                uri:track.uri,
             }));
 
             //set raw api result
@@ -58,7 +64,6 @@ function Home() {
         console.error('Error fetching from Spotify API:', error);
      };
  }
-
 
 
   const listHandler=(song)=>{
