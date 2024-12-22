@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getValidAccessToken,redirectToSpotifyAuth} from './pkceutilities';
+import { getValidAccessToken,redirectToSpotifyAuth, UserId} from './pkceutilities';
 
 
 
@@ -29,18 +29,7 @@ function MyList({mylist,deleteHandling,setPlayList}){
         }
         try{
         //get user_id
-        const userid_response= await fetch('https://api.spotify.com/v1/me', {
-            method: 'GET',
-            headers:{
-                Authorization:`Bearer ${accessToken}`,
-            }
-        });
-        if(!userid_response.ok){
-            console.log(`Request for accessing Spotify User ID failed!`,userid_response.status);
-            throw new Error('Failed to fetch user ID');
-        } 
-        const userData = await userid_response.json();
-        const user_id= userData.id;
+        const user_id= UserId();
 
         // creating the playlist
         const playlistResponse= await fetch(`https://api.spotify.com/v1/users/${user_id}/playlists`,{

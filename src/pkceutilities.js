@@ -148,6 +148,8 @@ export async function refreshToken(){
       throw error;
    }
 } 
+
+//get valid access Token
 export async function getValidAccessToken(){
    const accessToken= localStorage.getItem('access_token');
    const expiresAt= parseInt(localStorage.getItem("expires_at"),10); //retrieves the stored expiration time
@@ -167,6 +169,33 @@ export async function getValidAccessToken(){
       localStorage.clear();//clear the stored tokens 
       redirectToSpotifyAuth(); //Re-initiate authentication flow
     }
+}
+
+export async function UserId(){
+   try{
+      const accessToken= await getValidAccessToken();
+      if(!accessToken){
+         console.error(`Access Token is undefined or invalid.`);
+         throw new Error('Failed to obtain access token.');
+      }
+      const userid_response= await fetch('https://api.spotify.com/v1/me', {
+         method: 'GET',
+         headers:{
+             Authorization:`Bearer ${accessToken}`,
+         }
+     });
+     if(!userid_response.ok){
+         console.error(`Request for accessing Spotify User ID failed:${userid_response.status}`);
+         throw new Error('Failed to fetch user ID');
+     } 
+     const userData = await userid_response.json();
+     const user_id= userData.id;
+     return user_id;
+   }
+   catch (error) {
+      console.log('Error in UserId function:', error.message);
+      throw error;
+   }
 }
 
 
