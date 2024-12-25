@@ -6,6 +6,7 @@ import Search from './search';
 import Results from './results';
 import MyList from './mylist';
 import { getValidAccessToken } from './pkceutilities';
+import ChangePlayListName from './changeplaylistname';
 
 function Home() {
   const[searchQuery,setSearchQuery]=useState("");
@@ -36,7 +37,7 @@ function Home() {
 
      try{
         const response=await fetch (
-            `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=track&limit=10`,
+            `/spotify-api/v1/search?q=${encodeURIComponent(searchQuery)}&type=track&limit=10`,
             {
                 method: 'GET',
                 headers: {
@@ -83,6 +84,9 @@ function Home() {
       <div className="text-white pb-30 flex flex-row w-full justify-center gap-[10%]">
         <Results filteredResults={result} handleMyList={listHandler}/>
         <MyList mylist={list} deleteHandling={deleteHandling} setPlayList={setPlayList}/>
+      </div>
+      <div>
+        <ChangePlayListName/>
       </div>
     </div>
   );

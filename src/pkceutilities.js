@@ -74,7 +74,8 @@ export async function exchangeCodeForToken(authorizationCode){
          },
          body: body.toString(),
       });
-
+      console.log("Request body:", body.toString());
+      console.log("Fetch response:", response);
       console.log('Token Response Status:', response.status);
 
       if (!response.ok){
@@ -127,6 +128,8 @@ export async function refreshToken(){
             body: body.toString(),
          }
       );
+      console.log("Request body:", body.toString());
+      console.log("Fetch response:", response);
        if (!response.ok){
          const errorBody= await response.text();
          throw new Error(`Token refresh failed: ${response.statusText} (${response.status}) - ${errorBody})`);
@@ -178,7 +181,7 @@ export async function UserId(){
          console.error(`Access Token is undefined or invalid.`);
          throw new Error('Failed to obtain access token.');
       }
-      const userid_response= await fetch('https://api.spotify.com/v1/me', {
+      const userid_response= await fetch('spotify-api/v1/me', {
          method: 'GET',
          headers:{
              Authorization:`Bearer ${accessToken}`,

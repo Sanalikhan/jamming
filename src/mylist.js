@@ -29,10 +29,10 @@ function MyList({mylist,deleteHandling,setPlayList}){
         }
         try{
         //get user_id
-        const user_id= UserId();
+        const user_id=  await UserId();
 
         // creating the playlist
-        const playlistResponse= await fetch(`https://api.spotify.com/v1/users/${user_id}/playlists`,{
+        const playlistResponse= await fetch(`/spotify-api/v1/users/${user_id}/playlists`,{
             method: 'POST',
             headers:{
                 Authorization: `Bearer ${accessToken}`,
@@ -55,7 +55,7 @@ function MyList({mylist,deleteHandling,setPlayList}){
         const playListID=playListData.id; //return the id for further use
 
         //Add tracks to the playlist
-        const addTrackResponse=await fetch(`https://api.spotify.com/v1/playlists/${playListID}/tracks`,{
+        const addTrackResponse=await fetch(`/spotify-api/v1/playlists/${playListID}/tracks`,{
             method:'POST',
             headers:{
                 Authorization:`Bearer ${accessToken}`,
