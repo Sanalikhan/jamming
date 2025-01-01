@@ -23,7 +23,7 @@ function MyList({mylist,deleteHandling,setPlayList}){
             alert('No tracks in the playlist to save. Please add tracks first!');
             return;
         }
-        if(!playlistName || !playlistName.trim()){
+        if(!playlistName){
             alert('Playlist name cannot be empty!');
             return;
         }
@@ -90,12 +90,12 @@ function MyList({mylist,deleteHandling,setPlayList}){
             </form>
             <ul className='w-full'>{mylist.map((song,index)=>(
                 <li key={song.uri || index} 
-                className='border-b-2 border-white flex flex-row justify-between items-center py-2'>
+                className='border-b border-gray-500 flex flex-row justify-between items-center py-2'>
                     <div>
                     <p>{song.title}</p>
-                    <p>{song.artist}</p>
+                    <p className='font-thin text-sm'>{song.artist}</p>
                     </div>
-                    <span className="material-symbols-outlined text-white text-sm hover:bg-blue-600 rounded-full px-1 hover:bg-opacity-70 bg-blue-500" onClick={()=>removeSong(song)}>delete</span>
+                    <span className="material-symbols-outlined text-white text-sm hover:bg-blue-600 rounded-full px-1 hover:bg-opacity-70 bg-blue-500 cursor-pointer" onClick={()=>removeSong(song)}>delete</span>
                 </li>
             ))}
             </ul>

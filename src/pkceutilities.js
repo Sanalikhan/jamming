@@ -21,7 +21,14 @@ return values.reduce((acc,value)=>acc+possible[value%possible.length], "");
 export async function redirectToSpotifyAuth(){
    const clientId='b09cf7cd755743e68f961a9124779aa1';
    const redirectUri='http://localhost:3000/callback';
-   const scope='user-read-private user-read-email playlist-modify-private playlist-modify-public';
+   const scopes=[
+   'user-read-private',
+   'user-read-email',
+   'playlist-modify-private',
+   'playlist-modify-public',
+   'playlist-read-collaborative',
+   'playlist-read-private'
+   ];
    const codeVerifier=generateCodeVerifier(64);
    const codeChallenge=await generateCodeChallenge(codeVerifier);
 
@@ -34,7 +41,7 @@ export async function redirectToSpotifyAuth(){
    const params = {
       response_type: 'code',
       client_id: clientId,
-      scope,
+      scope: scopes.join(' '), //scopes should be space-separated string   
       redirect_uri: redirectUri,
       code_challenge_method: 'S256',
       code_challenge: codeChallenge
@@ -118,7 +125,7 @@ export async function refreshToken(){
    body.append('grant_type','refresh_token');
 
    try{
-      console.log('Requesting new acccess token using refresh token...');
+      console.log('Requesting new access token using refresh token...');
       const response= await fetch(url,
          {
             method:'POST',
@@ -174,6 +181,7 @@ export async function getValidAccessToken(){
     }
 }
 
+
 export async function UserId(){
    try{
       const accessToken= await getValidAccessToken();
@@ -181,7 +189,7 @@ export async function UserId(){
          console.error(`Access Token is undefined or invalid.`);
          throw new Error('Failed to obtain access token.');
       }
-      const userid_response= await fetch('spotify-api/v1/me', {
+      const userid_response= await fetch('/spotify-api/v1/me', {
          method: 'GET',
          headers:{
              Authorization:`Bearer ${accessToken}`,

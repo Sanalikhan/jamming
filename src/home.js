@@ -37,7 +37,7 @@ function Home() {
 
      try{
         const response=await fetch (
-            `/spotify-api/v1/search?q=${encodeURIComponent(searchQuery)}&type=track&limit=10`,
+            `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=track&limit=10`,
             {
                 method: 'GET',
                 headers: {
@@ -45,6 +45,7 @@ function Home() {
                 }
             });
             if (!response.ok){
+              console.log('The search results cannot be displayed due to error');
                 throw new Error('Spotify API request failed');
             }
             const data= await response.json();
