@@ -1,16 +1,20 @@
 import React,{useEffect, useState} from "react";
 import { getValidAccessToken, redirectToSpotifyAuth} from "./pkceutilities";
 import Tracks from "./changetracks";
-import { redirect } from "react-router-dom";
+
 
 function ChangePlayListName(){
     const [playList, setPlayList]= useState([]);
     const [error, setError] = useState(null);
     const [showPlayLists, setShowPlaylists] = useState(false);
-    const [selectedPlaylistId,setSelectedPlaylistId] = useState(null);
+    const [selectedPlayListId,setSelectedPlayListId] = useState(null);
     const [editedPlayListName, setEditedPlayListName] = useState("");
     const [editedTracks, setEditedTracks] = useState([]);
-    const [enableEdit, setEnableEdit]= useState(false);
+    const [editingPlaylistId, setEditingPlaylistId]= useState(null);
+    const [artistName, setArtistName] = useState("");
+    const [trackName, setTrackName] = useState("");
+    const [trackId, setTrackId] = useState([]);
+
 
 
     useEffect(()=>{
@@ -51,16 +55,15 @@ function ChangePlayListName(){
 // main function connected to edit button
     const edit = (playlist) => {
     setEditedPlayListName(playlist.name);
-    setEditedPlayListId(playlist.id);
-    setEnableEdit(true);
-    setEditedTracks(playlist);
+    setEditingPlaylistId(playlist.id);
+    setSelectedPlayListId(null);
     };
+    //handleTrackIDs 
+    const handleTrackIDs = (trackId) =>{
+        return trackId.length > 5? trackId.slice(0,5): trackId;
+        } 
+        const trackIDs = handleTrackIDs(trackId);
 
-
-//handleTrackIDs 
-    const handleTrackIDs = (TrackId) =>{
-        return TrackId.length > 5? TrackId.slice(0,5): TrackId;
-    } 
 
 //handle save to spotify 
     const handleSave = async(editedPlayListName, editedTracks, playlist) => {
@@ -77,7 +80,8 @@ function ChangePlayListName(){
             alert('Playlist name cannot be empty');
             return;
         }
-        setEnableEdit(false);
+        setEditingPlaylistId(false);
+        const uris = editedTracks.map((trackId)=> `spotify:track:${trackId}`);
         try {
             const addTrackResponse=await fetch(`/spotify-api/v1/playlists/${playlist.id}/tracks`,{
                 method:'POST',
@@ -100,14 +104,16 @@ function ChangePlayListName(){
         }
     };
     const handleRecommendations =async () =>{
+        console.log('Add more tracks button just ran!');
         try {
             const accessToken = await getValidAccessToken();
             if (!accessToken){
                 redirectToSpotifyAuth();
                 return;
             }
-            const trackIDs = handleTrackIDs(TrackId);
+
             const seedTracks = trackIDs.join(',');
+            console.log("Seed Tracks:",seedTracks);
             const baseUrl= 'https://api.spotify.com/v1/recommendations';
             const recommendationUrl =`${baseUrl}?seed_tracks=${seedTracks}`;
             console.log(recommendationUrl);
@@ -118,19 +124,30 @@ function ChangePlayListName(){
                 }
             });
             if (!recommendations.ok){
-                console.error(`Error while fetching the recommendations:${error.message}`);
-                throw new Error(`${Error.status}: ${Error.message}`);
+                const errorMsg = `Error while fetching the recommendations: ${recommendations.statusText}`;
+                console.error(errorMsg);
+                setError(errorMsg);
+                return;
             }
-            const recommendationResponse =  await recommendationResponse.json();
-            const artistName=recommendationResponse.map((item)=>(
-            item.tracks.artists.name));
-            const trackName=recommendationResponse.map((item)=>(
-                    item.tracks.name));
-
+            const recommendationResponse =  await recommendations.json();
+            console.log("recommendations response:", recommendationResponse);
+            if (!recommendationResponse.tracks || recommendationResponse.tracks.length === 0){
+                setError("No recommendations found");
+                return;
+            }
+            const artistName = recommendationResponse.tracks.map((item)=>
+            item.artists?.[0]?.name || "Unknown Artist");
+            const trackName= recommendationResponse.tracks.map((item)=>
+                    item.name || "Unknown Track");
+                    console.log("Artist Name:",artistName);
+                    console.log("Track Name:", trackName);
+                    //update the states
+                    setTrackName(trackName);
+                    setArtistName(artistName);
         }
         catch(error){
             console.error(`Error fetching recommendations : ${error.message}`);
-            throw new Error(`Error getting recommendations: ${error.status} `)
+            setError(`Error getting recommendations: ${error.message} `)
         }
 
     }
@@ -148,56 +165,67 @@ function ChangePlayListName(){
             </button>
                 { showPlayLists && (
                     <div className="w-full px-7">
-                        error ? (
+                        {error ? (
                             <p className="text-red-500">Error : {error}</p>
                         ):(
                         <div>
                             <ul className="list-none w-full">
-                                {playList.map((playlist)=>(
+                                {playList.map((playlist)=>
                                     <li key={playlist.id} className="flex flex-col">
-                                        enableEdit ? (
+                                        {editingPlaylistId === playlist.id ? (
+                                        <>
                                             <input
                                             type="text"
                                             placeholder={playlist.name}
                                             onChange= {(e)=> setEditedPlayListName(e.target.value)}
                                             className= "bg-gray-700 text-white rounded px-3 py-2 w-full"
                                             />
-                                            selectedPlaylistId === playlist.id && 
                                             <div className="tracks-container flex flex-col gap-y-2">
-                                            <Tracks id={selectedPlaylistId} playlist={playlist}/>
+                                            <div className="flex flex-row">
+                                            <Tracks id={editingPlaylistId} setTrackId={setTrackId} trackId={trackId} isEditing={editingPlaylistId===playlist.id} editedTracks={editedTracks} setEditedTracks={setEditedTracks}/>
+                                            </div>
                                             <div className="flex flex-col gap-y-2">
-                                            <button className="text-white text-sm bg-blue-500 hover:bg-blue-600 hover:bg-opacity-70 rounded-full px-1 hover:cursor-pointer self-center px-3 mb-2" onClick={()=>handleRecommendations}>Add more Tracks...</button>
-                                            <button className="text-white text-sm bg-blue-500 hover:bg-blue-600 hover:bg-opacity-70 rounded-full px-3 hover:cursor-pointer self-end px-2 mb-4" onClick={()=>handleSave(editedPlayListName, editedTracks)}>Save</button> 
+                                            <button className="text-white text-sm bg-blue-500 hover:bg-blue-600 hover:bg-opacity-70 rounded-full hover:cursor-pointer self-center px-3 mb-2" onClick={()=>handleRecommendations()}>Add more Tracks...</button>
+                                            {/* <div className="flex flex-row text-white">
+                                            <div>
+                                            <h3>Track Names:</h3>
+                                            {trackName.map((name, index) => (
+                                             <p key={index}>{name}</p>
+                                            ))}
+                                            </div>
+                                            <div>
+                                            <h3>Artist Names:</h3>
+                                            {artistName.map((name, index) => (
+                                             <p key={index}>{name}</p>
+                                           ))}
+                                           </div>
+                                           </div> */}
+                                            <button className="text-white text-sm bg-blue-500 hover:bg-blue-600 hover:bg-opacity-70 rounded-full px-3 hover:cursor-pointer self-end mb-4" onClick={()=>handleSave(editedPlayListName, editedTracks)}>Save</button> 
                                             </div>
                                             </div>
+                                        </>
                                             ):(
+                                        <>
                                         <div className="mb-2 flex flex-row justify-between items-center border-b border-gray-500">  
                                         <button className=' py-2'
-                                         onClick={()=>setSelectedPlaylistId(playlist.id)}>
+                                         onClick={()=>setSelectedPlayListId(playlist.id)}>
                                             {playlist.name}
                                         </button>
                                         <span className="material-symbols-outlined text-white text-sm bg-blue-500 hover:bg-blue-600 hover:bg-opacity-70 rounded-full px-1 hover:cursor-pointer" onClick={()=>edit(playlist)}>edit</span>
                                         </div>
                                         {
-                                        selectedPlaylistId === playlist.id && 
+                                        selectedPlayListId === playlist.id && 
                                         <div className="tracks-container flex flex-col gap-y-2">
-                                        <Tracks id={selectedPlaylistId}/>
-                                        <div className="flex flex-col gap-y-2">
-                                        <button className="text-white text-sm bg-blue-500 hover:bg-blue-600 hover:bg-opacity-70 rounded-full px-1 hover:cursor-pointer self-center px-3 mb-2" onClick={()=>handleRecommendations}>Add more Tracks...</button>
-                                        <button className="text-white text-sm bg-blue-500 hover:bg-blue-600 hover:bg-opacity-70 rounded-full px-3 hover:cursor-pointer self-end px-2 mb-4" onClick={()=>handleSave(editedPlayListName, editedTracks, playlist)}>Save</button> 
-                                        </div>
-                                        </div>
-                                        }
-                                        )
-                                    </li> ))}
+                                        <Tracks id={selectedPlayListId} setTrackId={setTrackId} trackId={trackId} isEditing={false} editedTracks={editedTracks} setEditedTracks={setEditedTracks}/>
+                                        </div>}
+                                        </> )} </li> )}
                             </ul>
-                        </div>
-                        )
-                    </div>
-                    )}
-            </div>
+                        </div> )}
+                    </div> )}
+                    </div> 
     );
 }
+
 
 
 export default ChangePlayListName;
