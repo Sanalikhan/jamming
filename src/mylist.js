@@ -4,12 +4,12 @@ import { getValidAccessToken,redirectToSpotifyAuth, UserId} from './pkceutilitie
 
 
 
-function MyList({mylist,deleteHandling,setPlayList}){
+function MyList({list,deleteHandling,setPlayList}){
     const [playlistName,setPlaylistName]=useState("");
 
     const removeSong=(song)=>{
         const targetTitle=song.title;
-        const newList=mylist.filter((item)=>item.title!==targetTitle);
+        const newList=list.filter((item)=>item.title!==targetTitle);
         deleteHandling(newList);
     }
 
@@ -19,7 +19,7 @@ function MyList({mylist,deleteHandling,setPlayList}){
             redirectToSpotifyAuth();
             return;
         }
-        if(mylist.length === 0){
+        if(list.length === 0){
             alert('No tracks in the playlist to save. Please add tracks first!');
             return;
         }
@@ -30,6 +30,7 @@ function MyList({mylist,deleteHandling,setPlayList}){
         try{
         //get user_id
         const user_id=  await UserId();
+        console.log(user_id);
 
         // creating the playlist
         const playlistResponse= await fetch(`/spotify-api/v1/users/${user_id}/playlists`,{
@@ -49,10 +50,12 @@ function MyList({mylist,deleteHandling,setPlayList}){
             console.log('Error creating playlist:', playlistResponse.status, error);
             throw new Error('Failed to create playlist');
         }
+        console.log(playlistResponse);
 
         const playListData = await playlistResponse.json();
         console.log('Playlist Created:', playListData);
         const playListID=playListData.id; //return the id for further use
+        console.log(playListID);
 
         //Add tracks to the playlist
         const addTrackResponse=await fetch(`/spotify-api/v1/playlists/${playListID}/tracks`,{
@@ -88,7 +91,7 @@ function MyList({mylist,deleteHandling,setPlayList}){
                 onChange={({target})=>{setPlaylistName(target.value)}}
                 value={playlistName}/>
             </form>
-            <ul className='w-full'>{mylist.map((song,index)=>(
+            <ul className='w-full'>{list.map((song,index)=>(
                 <li key={song.uri || index} 
                 className='border-b border-gray-500 flex flex-row justify-between items-center py-2'>
                     <div>
@@ -100,7 +103,7 @@ function MyList({mylist,deleteHandling,setPlayList}){
             ))}
             </ul>
             <button className='bg-blue-500 rounded-full py-2 mt-6 w-[50%] hover:bg-blue-600' id='save-to-spotify'
-            onClick={()=>handleSaveToSpotify(playlistName, mylist.map((song)=> song.uri))}
+            onClick={()=>handleSaveToSpotify(playlistName, list.map((song)=> song.uri))}
             >Save to Spotify</button>
         </div>
     );

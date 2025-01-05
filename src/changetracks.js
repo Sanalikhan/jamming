@@ -2,7 +2,7 @@ import { useState,useEffect } from "react";
 import { getValidAccessToken } from "./pkceutilities";
 
 
- function Tracks({id, setTrackId, trackId, isEditing, editedTracks, setEditedTracks}) {
+ function Tracks({id, setTrackId, trackId, isEditing, editedTracks, setEditedTracks,editedTracksId, setEditedTracksId}) {
     const [tracks, setTracks] = useState([]);
     const [err, setErr] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -47,18 +47,30 @@ import { getValidAccessToken } from "./pkceutilities";
     }, [id, setTrackId]);
     useEffect(() => {
         setEditedTracks(tracks); // Initialize editedTracks with tracks when tracks change
+        setEditedTracksId(trackId); // Initialize editedTracksId with trackIds when tracks change
     }, [tracks, setEditedTracks]);
+    //use Effect to see the updates happening actually or not 
+    useEffect(()=>{
+        console.log('editedTracks state updated:', editedTracks);
+        console.log('The editedTrackIds:',editedTracksId);
+    }, [editedTracks,editedTracksId]);
 
     //handle delete for editing tracks
-    const handleDelete = (trackToRemove) => {
+    const handleDelete = (trackToRemove, idToRemove) => {
         console.log("Tracks to be edited from:",editedTracks);
         setEditedTracks((prevEditedTracks)=> {
             const updatedTracks = prevEditedTracks.filter((track)=> track !== trackToRemove);
-            console.log("Edited Tracks:",editedTracks);
-            console.log("Deleted Track:", trackToRemove);
+            console.log("Updated Tracks",updatedTracks);
             return updatedTracks;
-        }
-    );
+        });
+        setEditedTracksId((prevEditedTrackIds)=> {
+            const updatedIds = prevEditedTrackIds.filter((id)=> id!==idToRemove);
+            console.log("Updated Edited Track ids:", updatedIds);
+            return updatedIds;
+        });
+        console.log("Edited Tracks:",editedTracks);//will log the stale value due to asynchronous update of the state
+        console.log("Deleted Track:", trackToRemove);
+        console.log("Id to be removed:",idToRemove);
     }
 
 
@@ -75,7 +87,7 @@ import { getValidAccessToken } from "./pkceutilities";
                     <li 
                     key={index} className="flex flex-row justify-between gap-x-10 items-center">
                     <span>{track}</span>
-                    <span className=" material-symbols-outlined text-white text-xs hover:bg-blue-600 rounded-full px-1 hover:bg-opacity-70 bg-blue-500 cursor-pointer" onClick={()=>handleDelete(track)}>
+                    <span className=" material-symbols-outlined text-white text-xs hover:bg-blue-600 rounded-full px-1 hover:bg-opacity-70 bg-blue-500 cursor-pointer" onClick={()=>handleDelete(track, trackId[index])}>
                     delete</span>
                     </li>
                 ))}

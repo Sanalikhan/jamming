@@ -10,11 +10,12 @@ function ChangePlayListName(){
     const [selectedPlayListId,setSelectedPlayListId] = useState(null);
     const [editedPlayListName, setEditedPlayListName] = useState("");
     const [editedTracks, setEditedTracks] = useState([]);
+    const [editedTracksId, setEditedTracksId] = useState([]);
     const [editingPlaylistId, setEditingPlaylistId]= useState(null);
     const [artistName, setArtistName] = useState("");
     const [trackName, setTrackName] = useState("");
     const [trackId, setTrackId] = useState([]);
-
+    const [message,setMessage] = useState('');
 
 
     useEffect(()=>{
@@ -81,30 +82,68 @@ function ChangePlayListName(){
             return;
         }
         setEditingPlaylistId(false);
-        const uris = editedTracks.map((trackId)=> `spotify:track:${trackId}`);
+        setEditedPlayListName(editedPlayListName);
+        console.log("PlayList Name:", editedPlayListName);
+
         try {
-            const addTrackResponse=await fetch(`/spotify-api/v1/playlists/${playlist.id}/tracks`,{
-                method:'POST',
+            //update playlist name if changed
+            const renamedPlaylistResponse=await fetch(`/spotify-api/v1/playlists/${playlist.id}`,{
+                method:'PUT',
                 headers:{
                     Authorization:`Bearer ${accessToken}`,
                     'Content-Type':'application/json'
                 },
-                body:JSON.stringify(uris),
+                body:JSON.stringify({
+                    name: editedPlayListName
+                }),
             });
+            console.log("Playlist ID:", playlist.id);
+            console.log("Saving new name of the playlist:",renamedPlaylistResponse); 
     
-            if(!addTrackResponse.ok){
-                const error= await addTrackResponse.text();
-                console.log('Error adding tracks:', addTrackResponse.status,error);
+            if(!renamedPlaylistResponse.ok){
+                const error= await renamedPlaylistResponse.text();
+                console.log('Error renaming playlist:', renamedPlaylistResponse.status,error);
                 throw new Error('Failed to add tracks to the playlist');
             }
-            console.log('Playlist saved to Spotify successfully!');
+            console.log('Playlist name changed successfully!');
+
+        // replace playlist Tracks
+        const uris = editedTracksId.map((trackId)=> `spotify:track:${trackId}`);
+        console.log(uris);
+        const editedTracksResponse= await fetch(`/spotify-api/v1/playlists/${playlist.id}/tracks`,{
+            method:"PUT",
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                uris,
+            }),
+        });
+        if (!editedTracksResponse.ok){
+            throw new Error (`Failed to replace playlist tracks. Status: ${editedTracksResponse.status}`);
+        }
+        console.log('Playlist tracks updated successfully!');
+
+         //update local states
+         setEditedPlayListName("");
+         setEditingPlaylistId(null);
+         setEditedTracks([]);
+         setEditedTracksId([]);
+         alert("Playlist name updated successfully!");
         }
         catch(error){
             console.error('Error saving playlist to Spotify:' ,error);
+            alert("Failed to save the edited playlist. Please try again.")
         }
     };
     const handleRecommendations =async () =>{
         console.log('Add more tracks button just ran!');
+        setMessage((prevMessage)=> (prevMessage? "":"No recommendations available"));
+        
+
+        /*
+        // recommendations feature is deprecated in Spotify Api so not using this part of code 
         try {
             const accessToken = await getValidAccessToken();
             if (!accessToken){
@@ -149,6 +188,7 @@ function ChangePlayListName(){
             console.error(`Error fetching recommendations : ${error.message}`);
             setError(`Error getting recommendations: ${error.message} `)
         }
+            */
 
     }
 
@@ -182,10 +222,11 @@ function ChangePlayListName(){
                                             />
                                             <div className="tracks-container flex flex-col gap-y-2">
                                             <div className="flex flex-row">
-                                            <Tracks id={editingPlaylistId} setTrackId={setTrackId} trackId={trackId} isEditing={editingPlaylistId===playlist.id} editedTracks={editedTracks} setEditedTracks={setEditedTracks}/>
+                                            <Tracks id={editingPlaylistId} setTrackId={setTrackId} trackId={trackId} isEditing={editingPlaylistId===playlist.id} editedTracks={editedTracks} setEditedTracks={setEditedTracks} editedTracksId={editedTracksId} setEditedTracksId={setEditedTracksId}/>
                                             </div>
                                             <div className="flex flex-col gap-y-2">
                                             <button className="text-white text-sm bg-blue-500 hover:bg-blue-600 hover:bg-opacity-70 rounded-full hover:cursor-pointer self-center px-3 mb-2" onClick={()=>handleRecommendations()}>Add more Tracks...</button>
+                                            {message && <p className="text-white"> {message}</p>}
                                             {/* <div className="flex flex-row text-white">
                                             <div>
                                             <h3>Track Names:</h3>
@@ -200,7 +241,7 @@ function ChangePlayListName(){
                                            ))}
                                            </div>
                                            </div> */}
-                                            <button className="text-white text-sm bg-blue-500 hover:bg-blue-600 hover:bg-opacity-70 rounded-full px-3 hover:cursor-pointer self-end mb-4" onClick={()=>handleSave(editedPlayListName, editedTracks)}>Save</button> 
+                                            <button className="text-white text-sm bg-blue-500 hover:bg-blue-600 hover:bg-opacity-70 rounded-full px-3 hover:cursor-pointer self-end mb-4" onClick={()=>handleSave(editedPlayListName, editedTracks,playlist)}>Save</button> 
                                             </div>
                                             </div>
                                         </>
@@ -216,7 +257,7 @@ function ChangePlayListName(){
                                         {
                                         selectedPlayListId === playlist.id && 
                                         <div className="tracks-container flex flex-col gap-y-2">
-                                        <Tracks id={selectedPlayListId} setTrackId={setTrackId} trackId={trackId} isEditing={false} editedTracks={editedTracks} setEditedTracks={setEditedTracks}/>
+                                        <Tracks id={selectedPlayListId} setTrackId={setTrackId} trackId={trackId} isEditing={false} editedTracks={editedTracks} setEditedTracks={setEditedTracks} editedTracksId={editedTracksId} setEditedTracksId={setEditedTracksId}/>
                                         </div>}
                                         </> )} </li> )}
                             </ul>

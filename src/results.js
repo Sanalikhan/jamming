@@ -1,9 +1,10 @@
 import React from "react";
  function Results({filteredResults,handleMyList}){
+    //console.log("Results form the search:", filteredResults);
     return (
         <div className="bg-gray-800 bg-opacity-70 rounded-[30px] shadow-md hover:shadow-lg transition-shadow duration-200 mx-10 w-[30%]">
             <h2 className="text-3xl font-serif text-center px-6">Results</h2>
-            <ul className="flex flex-col py-5 px-10 mx-auto px-10 w-full">
+            <ul className="flex flex-col py-5 px-10 mx-auto w-full">
                 {filteredResults.map((song,index)=>(
                     <li key={index}
                         className="flex flex-row items-center justify-between">

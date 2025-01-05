@@ -9,9 +9,9 @@ import { getValidAccessToken } from './pkceutilities';
 import ChangePlayListName from './changeplaylistname';
 
 function Home() {
-  const[searchQuery,setSearchQuery]=useState("");
-  const[result,setResult]=useState([]);
-  const [list,setList]=useState([]);
+  const[searchQuery,setSearchQuery]=useState("");// to put the search query
+  const[result,setResult]=useState([]); // to display the results fetched form the search and use them to our desired data
+  const [list,setList]=useState([]); // to store the list of songs selected from the search results
   const [myPlayList,setMyPlayList]=useState([]);
 
 
@@ -84,7 +84,7 @@ function Home() {
       <Search onSearchChange={handleSearch} query={searchQuery}/>
       <div className="text-white pb-30 flex flex-row w-full justify-center gap-[10%]">
         <Results filteredResults={result} handleMyList={listHandler}/>
-        <MyList mylist={list} deleteHandling={deleteHandling} setPlayList={setPlayList}/>
+        <MyList list={list} deleteHandling={deleteHandling} setPlayList={setPlayList}/>
       </div>
       <div>
         <ChangePlayListName/>
